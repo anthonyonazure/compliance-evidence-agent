@@ -10,7 +10,7 @@ LangGraph agent that auto-collects SOC 2 evidence from Microsoft 365, Entra ID, 
 
 ### Real run against a real Microsoft 365 + Azure tenant
 
-Pulled 207 audit events, 5 conditional access policies, 8 admin role members, and Azure resource configurations from the live `tilmsp.com` tenant. Found 3 real gaps: no MFA-for-admins policy, subscription-level diagnostic settings not exporting activity logs, storage accounts allow anonymous public blob access. SHA-256 of the resulting PDF is written to a sidecar `.sha256` file as a tamper-evidence anchor.
+Pulled 207 audit events, 5 conditional access policies, 8 admin role members, and Azure resource configurations from a live M365 tenant. Found 3 real gaps: no MFA-for-admins policy, subscription-level diagnostic settings not exporting activity logs, storage accounts allow anonymous public blob access. SHA-256 of the resulting PDF is written to a sidecar `.sha256` file as a tamper-evidence anchor.
 
 <p>
   <img src="docs/media/evidence-pack-1.png" alt="Cover page: 70% pass rate, 7 passed, 3 failed" width="32%">
