@@ -1,0 +1,102 @@
+# SOC 2 Common Criteria — controls validated by the compliance-evidence-agent.
+#
+# Each control has:
+#   - id: short stable identifier
+#   - cc: SOC 2 Common Criteria reference (CC-X.X)
+#   - title: human-readable summary
+#   - source: which adapter the evidence comes from
+#   - check: type of validation (one of: presence, value, count_min, predicate)
+#   - args: check-specific configuration
+#
+# A check's `predicate` is the dotted path to a Python function in
+# compliance.predicates that returns (passed: bool, detail: dict).
+# All other check types are handled inline by the validator.
+
+controls:
+
+  # ---------- Logical & Physical Access (CC6) ----------
+
+  - id: CC6.1-MFA-FOR-ALL
+    cc: CC6.1
+    title: Multi-factor authentication is enforced for all users
+    source: entra_audit
+    check: predicate
+    args:
+      predicate: compliance.predicates.has_mfa_for_all_users
+
+  - id: CC6.1-MFA-FOR-ADMINS
+    cc: CC6.1
+    title: Multi-factor authentication is enforced for admin roles
+    source: entra_audit
+    check: predicate
+    args:
+      predicate: compliance.predicates.has_mfa_for_admins
+
+  - id: CC6.1-LEGACY-AUTH-BLOCKED
+    cc: CC6.1
+    title: Legacy authentication protocols are blocked
+    source: entra_audit
+    check: predicate
+    args:
+      predicate: compliance.predicates.blocks_legacy_auth
+
+  - id: CC6.3-ADMIN-ROLE-COUNT
+    cc: CC6.3
+    title: Number of Global Administrators is within recommended limit (≤4)
+    source: entra_audit
+    check: predicate
+    args:
+      predicate: compliance.predicates.global_admin_count_within_limit
+      max_global_admins: 4
+
+  # ---------- System Operations (CC7) ----------
+
+  - id: CC7.2-AUDIT-LOG-RETENTION
+    cc: CC7.2
+    title: Subscription-level diagnostic settings export activity logs
+    source: azure_resource
+    check: predicate
+    args:
+      predicate: compliance.predicates.subscription_diagnostics_configured
+
+  - id: CC7.2-RECENT-AUDIT-EVENTS
+    cc: CC7.2
+    title: Directory audit events are present in the last 30 days
+    source: entra_audit
+    check: count_min
+    args:
+      min_count: 1
+
+  # ---------- Change Management & Confidentiality (CC8 / C1) ----------
+
+  - id: CC8.1-STORAGE-NO-PUBLIC-BLOBS
+    cc: CC8.1
+    title: Storage accounts do not allow anonymous public blob access
+    source: azure_resource
+    check: predicate
+    args:
+      predicate: compliance.predicates.storage_no_public_blobs
+
+  - id: CC8.1-STORAGE-TLS-12
+    cc: CC8.1
+    title: Storage accounts require TLS 1.2 or higher
+    source: azure_resource
+    check: predicate
+    args:
+      predicate: compliance.predicates.storage_tls_minimum_12
+
+  - id: C1.1-KEYVAULT-PURGE-PROTECTION
+    cc: C1.1
+    title: Key Vaults have purge protection enabled
+    source: azure_resource
+    check: predicate
+    args:
+      predicate: compliance.predicates.keyvault_purge_protection_enabled
+
+  - id: CC6.7-WEBSITES-HTTPS-ONLY
+    cc: CC6.7
+    title: App Service / Function App resources enforce HTTPS-only
+    source: azure_resource
+    check: predicate
+    args:
+      predicate: compliance.predicates.app_service_https_only

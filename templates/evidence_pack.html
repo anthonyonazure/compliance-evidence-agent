@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ framework }} Evidence Pack — {{ run_id }}</title>
+<style>
+  @page { size: Letter; margin: 22mm 18mm; @bottom-center { content: counter(page) " / " counter(pages); color: #888; font-size: 9pt; } }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 10.5pt; line-height: 1.45; }
+
+  .cover { text-align: center; padding-top: 60mm; }
+  .cover h1 { font-size: 30pt; margin: 0 0 6mm; letter-spacing: -0.5px; }
+  .cover .meta { color: #555; font-size: 11pt; }
+  .cover .pillrow { margin-top: 16mm; }
+  .pill { display: inline-block; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 11pt; }
+  .pill.pass { background: #d4edda; color: #155724; }
+  .pill.fail { background: #f8d7da; color: #721c24; }
+  .pill.rate { background: #e7f0fb; color: #0b3d91; }
+
+  .pagebreak { page-break-after: always; }
+
+  h2.section { font-size: 16pt; border-bottom: 2px solid #0b3d91; padding-bottom: 4px; margin-top: 14mm; }
+  h3.control { font-size: 12pt; margin: 8mm 0 2mm; }
+
+  .summary { background: #f4f6f9; padding: 6mm 8mm; border-left: 4px solid #0b3d91; margin: 6mm 0; }
+
+  table.results { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+  table.results th, table.results td { padding: 6px 8px; text-align: left; vertical-align: top; font-size: 9.5pt; }
+  table.results th { background: #f4f6f9; font-weight: 700; border-bottom: 1px solid #ccc; }
+  table.results tr.pass td { border-bottom: 1px solid #eaeaea; }
+  table.results tr.fail td { border-bottom: 1px solid #eaeaea; background: #fff7f7; }
+  td.status { width: 70px; font-weight: 700; }
+  .status.pass { color: #155724; }
+  .status.fail { color: #721c24; }
+
+  .control-detail { background: #fafafa; border: 1px solid #eaeaea; border-radius: 4px; padding: 4mm 6mm; margin-bottom: 4mm; }
+  .control-detail .meta { color: #666; font-size: 9pt; margin-bottom: 2mm; }
+  pre.evidence { background: #fbfbfb; border: 1px solid #eee; padding: 3mm; font-size: 8.5pt; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <h1>{{ framework }} Evidence Pack</h1>
+  <div class="meta">
+    Run id: <code>{{ run_id }}</code><br>
+    Generated: {{ generated_at }}
+  </div>
+  <div class="pillrow">
+    <span class="pill rate">{{ pass_rate_pct }}% pass rate</span>
+    &nbsp;<span class="pill pass">{{ passed|length }} passed</span>
+    &nbsp;<span class="pill fail">{{ failed|length }} failed</span>
+  </div>
+</section>
+
+<div class="pagebreak"></div>
+
+<h2 class="section">Executive summary</h2>
+<div class="summary">{{ summary_md }}</div>
+
+<h2 class="section">Control results</h2>
+<table class="results">
+  <thead>
+    <tr>
+      <th>CC</th>
+      <th>Control</th>
+      <th>Source</th>
+      <th class="status">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in results %}
+    <tr class="{{ 'pass' if r.passed else 'fail' }}">
+      <td><code>{{ r.cc }}</code></td>
+      <td>{{ r.title }}<br><span style="color:#888;font-size:8.5pt">{{ r.id }}</span></td>
+      <td>{{ r.source }}</td>
+      <td class="status {{ 'pass' if r.passed else 'fail' }}">{{ 'PASS' if r.passed else 'FAIL' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="pagebreak"></div>
+
+<h2 class="section">Failed controls — evidence</h2>
+{% if failed %}
+  {% for r in failed %}
+  <div class="control-detail">
+    <h3 class="control">{{ r.cc }} · {{ r.title }}</h3>
+    <div class="meta"><code>{{ r.id }}</code> · source: {{ r.source }} · check: {{ r.check }}</div>
+    <pre class="evidence">{{ r.detail | tojson(indent=2) }}</pre>
+  </div>
+  {% endfor %}
+{% else %}
+  <p>No failed controls. Nothing to remediate this cycle.</p>
+{% endif %}
+
+<h2 class="section">Passed controls — evidence</h2>
+{% if passed %}
+  {% for r in passed %}
+  <div class="control-detail">
+    <h3 class="control">{{ r.cc }} · {{ r.title }}</h3>
+    <div class="meta"><code>{{ r.id }}</code> · source: {{ r.source }}</div>
+    <pre class="evidence">{{ r.detail | tojson(indent=2) }}</pre>
+  </div>
+  {% endfor %}
+{% else %}
+  <p>No controls passed.</p>
+{% endif %}
+
+</body>
+</html>
