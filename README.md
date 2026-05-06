@@ -1,5 +1,11 @@
 # compliance-evidence-agent
 
+[![tests](https://github.com/anthonyonazure/compliance-evidence-agent/actions/workflows/tests.yml/badge.svg)](https://github.com/anthonyonazure/compliance-evidence-agent/actions/workflows/tests.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/orchestrator-LangGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
+[![SOC 2](https://img.shields.io/badge/framework-SOC%202%20CC-blue.svg)](controls/soc2.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 LangGraph agent that auto-collects SOC 2 evidence from Microsoft 365, Entra ID, and Azure into a signed, hash-stamped PDF audit pack — fast enough to run nightly and detect drift the moment a control regresses.
 
 ### Real run against a real Microsoft 365 + Azure tenant
