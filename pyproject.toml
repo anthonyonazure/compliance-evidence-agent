@@ -24,6 +24,7 @@ dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.3",
+    "types-PyYAML>=6.0",
 ]
 
 [project.scripts]
@@ -38,6 +39,13 @@ packages = ["src/compliance"]
 
 [tool.uv.sources]
 b2b-agent-toolkit = { path = "../b2b-agent-toolkit", editable = true }
+
+# WeasyPrint ships no annotations and has no stub package on typeshed. Following
+# its untyped source still gives real inference at the call site, which is
+# strictly more checking than treating the module as Any.
+[[tool.mypy.overrides]]
+module = ["weasyprint.*"]
+follow_untyped_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

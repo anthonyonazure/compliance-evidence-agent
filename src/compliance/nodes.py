@@ -6,12 +6,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import structlog
 import yaml
+from anthropic.types import TextBlock
 from b2b_toolkit import get_adapters
 
 from compliance.pdf import render_evidence_pack
@@ -30,7 +31,7 @@ def _out_dir() -> Path:
 
 
 def _event(kind: str, **detail: Any) -> dict[str, Any]:
-    return {"at": datetime.now(timezone.utc).isoformat(), "kind": kind, **detail}
+    return {"at": datetime.now(UTC).isoformat(), "kind": kind, **detail}
 
 
 async def load_controls(state: ComplianceState) -> dict[str, Any]:
@@ -39,7 +40,10 @@ async def load_controls(state: ComplianceState) -> dict[str, Any]:
     data = yaml.safe_load(path.read_text())
     controls = data["controls"]
     log.info("compliance.controls.loaded", framework=framework, count=len(controls))
-    return {"controls": controls, "events": [_event("controls_loaded", count=len(controls))]}
+    return {
+        "controls": controls,
+        "events": [_event("controls_loaded", count=len(controls))],
+    }
 
 
 async def pull_entra(state: ComplianceState) -> dict[str, Any]:
@@ -59,7 +63,9 @@ async def pull_entra(state: ComplianceState) -> dict[str, Any]:
             "audits": audits,
             "role_members": role_members,
         },
-        "events": [_event("entra_evidence", policies=len(policies), audits=len(audits))],
+        "events": [
+            _event("entra_evidence", policies=len(policies), audits=len(audits))
+        ],
     }
 
 
@@ -84,10 +90,22 @@ async def validate(state: ComplianceState) -> dict[str, Any]:
     }
     results = validate_controls(state["controls"], evidence)
     passed = sum(1 for r in results if r["passed"])
-    log.info("compliance.validated", total=len(results), passed=passed, failed=len(results) - passed)
+    log.info(
+        "compliance.validated",
+        total=len(results),
+        passed=passed,
+        failed=len(results) - passed,
+    )
     return {
         "results": results,
-        "events": [_event("validated", total=len(results), passed=passed, failed=len(results) - passed)],
+        "events": [
+            _event(
+                "validated",
+                total=len(results),
+                passed=passed,
+                failed=len(results) - passed,
+            )
+        ],
     }
 
 
@@ -96,7 +114,9 @@ async def summarize(state: ComplianceState) -> dict[str, Any]:
     when no API key is set, so the demo runs cold."""
     fails = [r for r in state["results"] if not r["passed"]]
     if not fails:
-        return {"summary_md": "**All controls passed.** No remediation required this cycle."}
+        return {
+            "summary_md": "**All controls passed.** No remediation required this cycle."
+        }
 
     if not os.environ.get("ANTHROPIC_API_KEY"):
         return {"summary_md": _stub_summary(state["results"])}
@@ -121,7 +141,13 @@ async def summarize(state: ComplianceState) -> dict[str, Any]:
         max_tokens=600,
         messages=[{"role": "user", "content": prompt}],
     )
-    return {"summary_md": msg.content[0].text.strip()}
+    # The response content is a union of block kinds (text, tool use, thinking,
+    # ...). Only a text block carries prose, so assert that rather than reaching
+    # for .text on whatever came back.
+    block = msg.content[0]
+    if not isinstance(block, TextBlock):
+        raise TypeError(f"expected a text block from the model, got {block.type!r}")
+    return {"summary_md": block.text.strip()}
 
 
 def _stub_summary(results: list[dict]) -> str:
@@ -140,7 +166,7 @@ async def build_pdf(state: ComplianceState) -> dict[str, Any]:
         framework=state.get("framework", "soc2").upper(),
         results=state["results"],
         summary_md=state.get("summary_md", ""),
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
     )
     out_path = _out_dir() / f"{state['run_id']}-evidence-pack.pdf"
     out_path.write_bytes(pdf_bytes)
@@ -148,7 +174,12 @@ async def build_pdf(state: ComplianceState) -> dict[str, Any]:
     sha = hashlib.sha256(pdf_bytes).hexdigest()
     sidecar = out_path.with_suffix(".sha256")
     sidecar.write_text(f"{sha}  {out_path.name}\n")
-    log.info("compliance.pdf.built", path=str(out_path), sha256=sha[:12], bytes=len(pdf_bytes))
+    log.info(
+        "compliance.pdf.built",
+        path=str(out_path),
+        sha256=sha[:12],
+        bytes=len(pdf_bytes),
+    )
     return {
         "pdf_path": str(out_path),
         "pdf_sha256": sha,

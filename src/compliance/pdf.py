@@ -9,7 +9,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from weasyprint import HTML
 
 _TEMPLATES = Path(__file__).resolve().parents[2] / "templates"
-_env = Environment(loader=FileSystemLoader(_TEMPLATES), autoescape=select_autoescape(["html", "xml"]))
+_env = Environment(
+    loader=FileSystemLoader(_TEMPLATES), autoescape=select_autoescape(["html", "xml"])
+)
 
 
 def render_evidence_pack(
@@ -30,7 +32,7 @@ def render_evidence_pack(
         results=results,
         passed=passed,
         failed=failed,
-        pass_rate_pct=int(round(len(passed) / max(len(results), 1) * 100)),
+        pass_rate_pct=round(len(passed) / max(len(results), 1) * 100),
         summary_md=summary_md,
     )
     return HTML(string=html, base_url=str(_TEMPLATES)).write_pdf()

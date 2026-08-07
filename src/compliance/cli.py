@@ -25,7 +25,9 @@ log = structlog.get_logger()
 
 @app.command()
 def run(
-    framework: str = typer.Option("soc2", "--framework", "-f", help="Framework to assess"),
+    framework: str = typer.Option(
+        "soc2", "--framework", "-f", help="Framework to assess"
+    ),
     save_log: bool = typer.Option(True, help="Persist event log to out/"),
 ) -> None:
     """Run a compliance evidence collection pass and emit a signed PDF pack."""
@@ -34,7 +36,12 @@ def run(
 
 async def _run(framework: str, save_log: bool) -> None:
     run_id = uuid.uuid4().hex[:10]
-    initial: ComplianceState = {"run_id": run_id, "framework": framework, "events": [], "errors": []}
+    initial: ComplianceState = {
+        "run_id": run_id,
+        "framework": framework,
+        "events": [],
+        "errors": [],
+    }
 
     graph = build_graph().compile()
     console.rule(f"[bold cyan]Compliance run {run_id} — {framework.upper()}[/]")
@@ -59,9 +66,11 @@ async def _run(framework: str, save_log: bool) -> None:
         status = "[green]PASS[/]" if r["passed"] else "[red]FAIL[/]"
         table.add_row(r.get("cc", ""), r["title"], status)
     console.print(table)
-    console.print(f"\n[bold]{passed}[/] passed · [bold]{failed}[/] failed · "
-                  f"PDF: {final_state.get('pdf_path')}\n"
-                  f"SHA-256: {final_state.get('pdf_sha256')}")
+    console.print(
+        f"\n[bold]{passed}[/] passed · [bold]{failed}[/] failed · "
+        f"PDF: {final_state.get('pdf_path')}\n"
+        f"SHA-256: {final_state.get('pdf_sha256')}"
+    )
 
     if save_log:
         out = Path("out") / f"{run_id}.json"
@@ -74,6 +83,7 @@ async def _run(framework: str, save_log: bool) -> None:
 def version() -> None:
     """Print agent version."""
     from compliance import __version__
+
     console.print(f"compliance-evidence-agent {__version__}")
 
 
