@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 
 dependencies = [
-    "b2b-agent-toolkit",
+    "b2b-agent-toolkit @ git+https://github.com/anthonyonazure/b2b-agent-toolkit@main",
     "langgraph>=0.2.40",
     "anthropic>=0.39",
     "weasyprint>=62.0",
@@ -49,3 +49,9 @@ follow_untyped_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+# The b2b-agent-toolkit dependency names its git source explicitly, because
+# that package is not on PyPI and a bare name there is resolvable by anyone who
+# registers it. Hatchling refuses direct references unless told otherwise.
+[tool.hatch.metadata]
+allow-direct-references = true
